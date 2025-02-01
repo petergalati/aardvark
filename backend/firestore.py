@@ -5,15 +5,25 @@ from firebase_admin import credentials, firestore
 
 load_dotenv()
 
-def configure_db():
-    key_path = os.getenv('FIRESTORE_PATH')  # Get the API key from the .env file
-    if key_path is None:
-        raise ValueError("Firestone key path not found in environment variables")
-    cred = credentials.Certificate(key_path)
-    firebase_admin.initialize_app(cred)
-    print("Firestore initialized successfully!")
+db = None
 
-    return firestore.client()
+def configure_db():
+    global db
+    if db is None:  # Only initialize Firestore once
+        key_path = os.getenv('FIRESTORE_PATH')  # Get the API key from .env
+        if key_path is None:
+            raise ValueError("Firestore key path not found in environment variables")
+        
+        cred = credentials.Certificate(key_path)
+        
+        # Check if Firebase app is already initialized
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+            print("Firestore initialized successfully!")
+        
+        db = firestore.client()
+    
+    return db  # Return Firestore client instance
 
 def add_comment(url, text, comment, username="Anonymous"):
     db = configure_db()
@@ -32,7 +42,6 @@ def add_comment(url, text, comment, username="Anonymous"):
 
     print(f"Comment added to {url}")
 
-
 def read_comments(url, text_filter=None):
     db = configure_db()
     doc_ref = db.collection("comments").document(url)
@@ -50,6 +59,7 @@ def read_comments(url, text_filter=None):
 
     return comments
 
+'''
 if __name__ == "__main__":
 
     url="bbc.com"
@@ -61,3 +71,4 @@ if __name__ == "__main__":
     all_comments = read_comments(url)
     for comment in all_comments:
         print(comment)
+'''
