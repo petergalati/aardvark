@@ -1,4 +1,8 @@
-# ICHack25
+# ICHack25 - Dev Instructions
+
+## Environment stuff
+Make sure you add the ```.env``` file (shared on the Discord group) to the top level of the ```aardvark``` repo. So it should be ```/aardvark/.env```.
+
 
 ## Backend Setup
 

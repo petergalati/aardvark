@@ -1,12 +1,12 @@
 {
+  "name": "Gemini Verifier",
+  "description": "Highlights text, sends it to a Flask backend to verify, and displays results.",
+  "version": "1.0",
   "manifest_version": 3,
-  "name": "Fact Check with Gemini",
-  "version": "1.0.0",
-  "description": "A Chrome extension to fact-check highlighted text using the Gemini API.",
   "permissions": [
-    "activeTab",
     "contextMenus",
-    "storage"
+    "activeTab",
+    "scripting"
   ],
   "background": {
     "service_worker": "background.js"
@@ -14,14 +14,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["contentScript.js"]
     }
-  ],
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": true
-  },
-  "icons": {
-    "16": "icons/icon16.png"
-  }
+  ]
 }
