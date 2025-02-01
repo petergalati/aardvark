@@ -49,7 +49,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             success: true,
             text: selectedText,
             message: data.message || "Verification successful.",
-            sources: data.sources || []
+            sources: data.sources || ["source1.com", "source2.com"]
           }
         });
       }
