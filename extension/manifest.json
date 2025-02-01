@@ -1,27 +1,26 @@
 {
   "manifest_version": 3,
-  "name": "Fact Check with Gemini",
-  "version": "1.0.0",
-  "description": "A Chrome extension to fact-check highlighted text using the Gemini API.",
+  "name": "Evidence Corroborator",
+  "version": "1.0",
+  "description": "Highlights text, queries Gemini for corroborating evidence, and displays the results inline.",
   "permissions": [
-    "activeTab",
     "contextMenus",
-    "storage"
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://api.yourgeminiendpoint.com/*"
   ],
   "background": {
     "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Check Evidence"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
-  ],
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": true
-  },
-  "icons": {
-    "16": "icons/icon16.png"
-  }
+  ]
 }

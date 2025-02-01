@@ -1,82 +1,81 @@
-// content.js
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "showResults") {
-    const { summary, sources } = request.results;
-    displayResultsOverlay(summary, sources);
-  } else if (request.action === "noApiKey") {
-    alert("Please set your Gemini API key in the extension's options page.");
-  } else if (request.action === "apiError") {
-    alert("An error occurred calling the Gemini API: " + request.error);
-  }
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "showLoading") {
+        showIndicator("Loading evidence...");
+    } else if (message.action === "displayResults") {
+        displayResults(message.data);
+    } else if (message.action === "displayError") {
+        showIndicator("Error: " + message.error);
+    }
 });
 
-/**
- * Creates a semi-transparent overlay at the bottom of the page, showing the fact-check summary and sources.
- */
-function displayResultsOverlay(summary, sources = []) {
-  // Create a container for the overlay
-  const overlay = document.createElement("div");
-  overlay.style.cssText = `
-    position: fixed; 
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    background-color: #333;
-    color: #fff;
-    padding: 15px;
-    border-radius: 6px;
-    z-index: 999999;
-    font-family: sans-serif;
-    max-height: 50vh;
-    overflow-y: auto;
-  `;
+function removeIndicator() {
+    const existing = document.getElementById("evidence-indicator");
+    if (existing) {
+        existing.remove();
+    }
+}
 
-  // Add the summary
-  const summaryEl = document.createElement("p");
-  summaryEl.textContent = summary;
-  summaryEl.style.marginBottom = "10px";
-  overlay.appendChild(summaryEl);
+function showIndicator(text) {
+    removeIndicator();
+    const indicator = document.createElement("div");
+    indicator.id = "evidence-indicator";
+    indicator.style.position = "absolute";
+    indicator.style.background = "#fff";
+    indicator.style.border = "1px solid #ccc";
+    indicator.style.padding = "8px";
+    indicator.style.zIndex = 10000;
+    indicator.textContent = text;
 
-  // Add sources if available
-  if (sources.length > 0) {
-    const sourcesTitle = document.createElement("strong");
-    sourcesTitle.textContent = "Sources:";
-    overlay.appendChild(sourcesTitle);
+    const range = window.getSelection().getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    indicator.style.top = (rect.bottom + window.scrollY + 5) + "px";
+    indicator.style.left = (rect.left + window.scrollX) + "px";
 
-    const sourceList = document.createElement("ul");
-    sourceList.style.margin = "5px 0";
-    sources.forEach((src) => {
-      const li = document.createElement("li");
-      // Create clickable links for sources
-      const link = document.createElement("a");
-      link.href = src;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = src;
-      link.style.color = "#4AE";
-      li.appendChild(link);
-      sourceList.appendChild(li);
-    });
-    overlay.appendChild(sourceList);
-  }
+    document.body.appendChild(indicator);
+}
 
-  // Close button
-  const closeButton = document.createElement("button");
-  closeButton.textContent = "Close";
-  closeButton.style.cssText = `
-    margin-top: 10px;
-    background: #555;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 4px;
-  `;
-  closeButton.addEventListener("click", () => {
-    overlay.remove();
-  });
-  overlay.appendChild(closeButton);
+function displayResults(data) {
+    removeIndicator();
 
-  // Add overlay to the page
-  document.body.appendChild(overlay);
+    const resultDiv = document.createElement("div");
+    resultDiv.id = "evidence-indicator";
+    resultDiv.style.position = "absolute";
+    resultDiv.style.background = "#f9f9f9";
+    resultDiv.style.border = "1px solid #ccc";
+    resultDiv.style.padding = "8px";
+    resultDiv.style.zIndex = 10000;
+
+    // If you enforced JSON output in your Flask/Gemini prompt,
+    // you'll get data like: { summary: "...", evidence: [ { url, title }, ... ] }
+    if (data.summary) {
+        const summaryP = document.createElement("p");
+        summaryP.textContent = data.summary;
+        resultDiv.appendChild(summaryP);
+    }
+
+    if (data.evidence && Array.isArray(data.evidence)) {
+        const list = document.createElement("ul");
+        data.evidence.forEach(item => {
+            const li = document.createElement("li");
+            const link = document.createElement("a");
+            link.href = item.url;
+            link.textContent = item.title || item.url;
+            link.target = "_blank";
+            li.appendChild(link);
+            list.appendChild(li);
+        });
+        resultDiv.appendChild(list);
+    } else if (!data.summary) {
+        // If the model didn't return structured data, just show it as raw JSON or text.
+        const rawResponse = document.createElement("p");
+        rawResponse.textContent = JSON.stringify(data);
+        resultDiv.appendChild(rawResponse);
+    }
+
+    const range = window.getSelection().getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    resultDiv.style.top = (rect.bottom + window.scrollY + 5) + "px";
+    resultDiv.style.left = (rect.left + window.scrollX) + "px";
+
+    document.body.appendChild(resultDiv);
 }
