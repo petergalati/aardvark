@@ -51,7 +51,8 @@ def add_comment(url, text, comment, username="Anonymous"):
 
 def read_comments(url, text_filter=None):
     db = configure_db()
-    doc_ref = db.collection("comments").document(url)
+    doc_id = sanitize_url(url)
+    doc_ref = db.collection("comments").document(doc_id)
     doc = doc_ref.get()
 
     if not doc.exists:

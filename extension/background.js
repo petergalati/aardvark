@@ -121,3 +121,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     return true;
   }
 });
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete") {
+    chrome.tabs.sendMessage(tabId, { action: "FETCH_COMMENTS" });
+  }
+});
