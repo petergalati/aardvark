@@ -4,6 +4,7 @@ from gemini_service import generate_content
 from firestore import add_comment, read_comments
 from flask_cors import CORS
 import anthropic
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -64,7 +65,7 @@ def read_comments_api():
 
 
 client = anthropic.Anthropic(
-    api_key="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"  # or omit to use environment variable
+    api_key=os.getenv("CLAUDE-API-KEY") # or omit to use environment variable
 )
 
 def summarize_text(texts):
