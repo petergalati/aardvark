@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, firestore
+import re
 
 load_dotenv()
 
@@ -25,9 +26,14 @@ def configure_db():
     
     return db  # Return Firestore client instance
 
+def sanitize_url(url):
+    """ Convert URL into a Firestore-safe document ID by replacing special characters. """
+    return re.sub(r'[^a-zA-Z0-9_-]', '_', url)  # Replace invalid characters with '_'
+
 def add_comment(url, text, comment, username="Anonymous"):
     db = configure_db()
-    doc_ref = db.collection("comments").document(url)  # Use URL as document ID
+    doc_id = sanitize_url(url)
+    doc_ref = db.collection("comments").document(doc_id)  # Use URL as document ID
 
     # Store comment as a list of dictionaries
     doc_ref.set(
