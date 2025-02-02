@@ -150,11 +150,6 @@ function createCommentOverlay({ url, text }) {
         username: "Anonymous"  // or gather from your extension’s settings
       }
     }, (response) => {
-      if (response && response.success) {
-        alert("Comment saved successfully!");
-      } else {
-        alert("Failed to save comment: " + (response?.message || "Unknown error"));
-      }
       commentOverlay.remove(); // Close the overlay after saving
     });
   };
