@@ -342,6 +342,7 @@ function highlightTextWithComments(comments) {
   nodesToProcess.forEach(node => {
     let parent = node.parentNode;
     let textContent = node.nodeValue;
+    let modified = false;
 
     let highlights = [];
 
@@ -377,11 +378,9 @@ function highlightTextWithComments(comments) {
         span.style.cursor = "pointer";
         span.style.borderRadius = "3px";
         span.style.padding = "2px";
-        span.style.position = "relative";
 
-        // Create pop-up on hover
-        span.onmouseenter = () => showCommentPopup(span, text, comments);
-        span.onmouseleave = hideCommentPopup;
+        // Show multiple comments in tooltip
+        span.title = comments.join("\n");
 
         fragment.appendChild(span);
         lastIndex = end;
@@ -394,121 +393,6 @@ function highlightTextWithComments(comments) {
       parent.replaceChild(fragment, node);
     }
   });
-}
-
-// Function to show the pop-up comment box
-// Function to show the pop-up comment box
-function showCommentPopup(span, text, comments) {
-  // Remove any existing pop-ups
-  hideCommentPopup();
-
-  const popup = document.createElement("div");
-  popup.id = "comment-popup";
-  popup.style.position = "absolute";
-  popup.style.left = "0";
-  popup.style.top = "100%";
-  popup.style.width = "250px";
-  popup.style.backgroundColor = "#fff";
-  popup.style.border = "1px solid #ccc";
-  popup.style.borderRadius = "5px";
-  popup.style.boxShadow = "0px 4px 6px rgba(0,0,0,0.1)";
-  popup.style.padding = "8px";
-  popup.style.zIndex = "9999";
-  popup.style.fontSize = "0.9em";
-  popup.style.color = "#000";
-
-  // Summary comment section
-  const summary = document.createElement("p");
-  summary.innerText = `Summary: ${generateSummary(comments)}`;
-  summary.style.fontWeight = "bold";
-  popup.appendChild(summary);
-
-  // Expandable "comments" link
-  const commentsLink = document.createElement("a");
-  commentsLink.innerText = "Show all comments";
-  commentsLink.href = "#";
-  commentsLink.style.color = "blue";
-  commentsLink.style.cursor = "pointer";
-
-  // Create a hidden div for full comments
-  const fullCommentsDiv = document.createElement("div");
-  fullCommentsDiv.style.display = "none"; // Initially hidden
-  fullCommentsDiv.style.marginTop = "8px";
-
-  comments.forEach(comment => {
-    const commentItem = document.createElement("p");
-    commentItem.innerText = `• ${comment}`;
-    fullCommentsDiv.appendChild(commentItem);
-  });
-
-  // Close button for full comments
-  const closeButton = document.createElement("a");
-  closeButton.innerText = "Close";
-  closeButton.href = "#";
-  closeButton.style.display = "block";
-  closeButton.style.color = "red";
-  closeButton.style.cursor = "pointer";
-  closeButton.onclick = (event) => {
-    event.preventDefault();
-    fullCommentsDiv.style.display = "none"; // Hide full comments
-    commentsLink.style.display = "block"; // Show "Show all comments" again
-  };
-  fullCommentsDiv.appendChild(closeButton);
-
-  // Click to toggle comments
-  commentsLink.onclick = (event) => {
-    event.preventDefault();
-    fullCommentsDiv.style.display = "block"; // Show full comments
-    commentsLink.style.display = "none"; // Hide "Show all comments"
-  };
-
-  popup.appendChild(commentsLink);
-  popup.appendChild(fullCommentsDiv); // Add hidden full comments
-
-  span.appendChild(popup);
-}
-
-// Function to remove the pop-up when not hovering
-function hideCommentPopup() {
-  const existingPopup = document.getElementById("comment-popup");
-  if (existingPopup) {
-    existingPopup.remove();
-  }
-}
-
-
-// Function to display all comments inside the pop-up
-function showFullComments(popup, comments) {
-  popup.innerHTML = ""; // Clear existing content
-
-  const header = document.createElement("p");
-  header.innerText = "All Comments:";
-  header.style.fontWeight = "bold";
-  popup.appendChild(header);
-
-  comments.forEach(comment => {
-    const commentItem = document.createElement("p");
-    commentItem.innerText = `• ${comment}`;
-    popup.appendChild(commentItem);
-  });
-
-  // Close button
-  const closeButton = document.createElement("a");
-  closeButton.innerText = "Close";
-  closeButton.href = "#";
-  closeButton.style.color = "red";
-  closeButton.style.cursor = "pointer";
-  closeButton.onclick = (event) => {
-    event.preventDefault();
-    hideCommentPopup();
-  };
-  popup.appendChild(closeButton);
-}
-
-// Function to generate a short summary from multiple comments
-function generateSummary(comments) {
-  if (comments.length === 1) return comments[0]; // If only one comment, show it
-  return `${comments.length} comments available.`;
 }
 
 // Merges overlapping or contained highlights into a single range
@@ -542,6 +426,7 @@ function mergeOverlappingHighlights(highlights, textContent) {
 
   return merged;
 }
+
 
 // Run this when the page loads
 fetchComments();
