@@ -85,8 +85,14 @@ function createOverlay({ success, text, sources }) {
 }
 
 function createCommentOverlay({ url, text }) {
+  // Remove any existing comment overlay first
+  const existingOverlay = document.getElementById("gemini-comment-overlay");
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
   // Check if the verification overlay is present
-  const verificationOverlay = document.getElementById("gemini-verifier-overlay");
+  const verificationOverlay = document.getElementById("aardvark-verifier-overlay");
 
   // Create the container
   const commentOverlay = document.createElement("div");
@@ -101,24 +107,24 @@ function createCommentOverlay({ url, text }) {
   commentOverlay.style.fontFamily = "Arial, sans-serif";
   commentOverlay.style.boxShadow = "0 0 10px rgba(0,0,0,0.2)";
   commentOverlay.style.color = "#000";
+  commentOverlay.style.textAlign = "center"; // Center align text
 
   // If verification overlay is present, place this below it
   // else default to top-right
   if (verificationOverlay) {
-    // We can get the bounding box to place it below
     const rect = verificationOverlay.getBoundingClientRect();
     commentOverlay.style.top = (rect.bottom + 10) + "px";
     commentOverlay.style.right = "10px";
   } else {
-    // If no verification overlay, just place at top-right
     commentOverlay.style.top = "10px";
     commentOverlay.style.right = "10px";
   }
 
   // Header
   const header = document.createElement("h3");
-  header.innerText = "Add Comment to Gemini";
-  header.style.marginTop = "0";
+  header.innerText = "Add Comment to Aardvark";
+  header.style.fontWeight = "bold";
+  header.style.marginBottom = "10px";
   commentOverlay.appendChild(header);
 
   // Show the url/text that will be commented on
@@ -126,6 +132,7 @@ function createCommentOverlay({ url, text }) {
   info.innerText = `URL: ${url}\nText: "${text}"`;
   info.style.whiteSpace = "pre-wrap";
   info.style.fontSize = "0.9em";
+  info.style.marginBottom = "10px";
   commentOverlay.appendChild(info);
 
   // Text area for the comment
@@ -135,12 +142,24 @@ function createCommentOverlay({ url, text }) {
   textArea.placeholder = "Enter your comment here...";
   textArea.style.display = "block";
   textArea.style.width = "100%";
-  textArea.style.marginBottom = "8px";
+  textArea.style.marginBottom = "10px";
   commentOverlay.appendChild(textArea);
+
+  // Button container
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.display = "flex";
+  buttonContainer.style.justifyContent = "center";
+  buttonContainer.style.gap = "8px";
 
   // Save button
   const saveButton = document.createElement("button");
   saveButton.innerText = "Save Comment";
+  saveButton.style.padding = "5px 10px";
+  saveButton.style.cursor = "pointer";
+  saveButton.style.border = "2px solid #333";
+  saveButton.style.borderRadius = "8px";
+  saveButton.style.backgroundColor = "transparent";
+  saveButton.style.color = "#333";
   saveButton.onclick = () => {
     const comment = textArea.value.trim();
     if (!comment) {
@@ -161,16 +180,23 @@ function createCommentOverlay({ url, text }) {
       commentOverlay.remove(); // Close the overlay after saving
     });
   };
-  commentOverlay.appendChild(saveButton);
+  buttonContainer.appendChild(saveButton);
 
   // Close button
-  const closeBtn = document.createElement("button");
-  closeBtn.innerText = "Close";
-  closeBtn.style.marginLeft = "8px";
-  closeBtn.onclick = () => {
+  const closeButton = document.createElement("button");
+  closeButton.innerText = "Close";
+  closeButton.style.padding = "5px 10px";
+  closeButton.style.cursor = "pointer";
+  closeButton.style.border = "2px solid #333";
+  closeButton.style.borderRadius = "8px";
+  closeButton.style.backgroundColor = "transparent";
+  closeButton.style.color = "#333";
+  closeButton.onclick = () => {
     commentOverlay.remove();
   };
-  commentOverlay.appendChild(closeBtn);
+  buttonContainer.appendChild(closeButton);
+
+  commentOverlay.appendChild(buttonContainer);
 
   return commentOverlay;
 }
