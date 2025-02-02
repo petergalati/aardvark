@@ -268,7 +268,6 @@ function highlightTextWithComments(comments) {
     });
 
     if (highlights.length > 0) {
-      modified = true;
       highlights = mergeOverlappingHighlights(highlights, textContent); // Merge overlapping highlights
 
       let fragment = document.createDocumentFragment();
@@ -339,7 +338,7 @@ function mergeOverlappingHighlights(highlights, textContent) {
 // Run this when the page loads
 fetchComments();
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request) => {
   if (request.action === "FETCH_COMMENTS") {
     fetchComments();
   }
