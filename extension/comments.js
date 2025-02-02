@@ -94,6 +94,7 @@ function createCommentOverlay({ url, text }) {
                 username: "Anonymous"  // or gather from your extension’s settings
             }
         }, (response) => {
+            fetchComments();
             commentOverlay.remove(); // Close the overlay after saving
         });
     };
