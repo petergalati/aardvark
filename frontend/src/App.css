@@ -1,0 +1,162 @@
+/* Reset some basic styles (optional) */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Overall App styling */
+.App {
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+/* HEADER */
+.header {
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1em 2em;
+}
+
+.logo {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1em;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+}
+
+/* HERO SECTION */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4em 2em;
+  background: #f9f9f9;
+}
+
+.hero-content {
+  max-width: 600px;
+  margin-bottom: 2em;
+}
+
+.hero-content h1 {
+  font-size: 2.5em;
+  margin-bottom: 0.5em;
+}
+
+.hero-content p {
+  font-size: 1.1em;
+  margin-bottom: 1.5em;
+  line-height: 1.5;
+}
+
+.hero-image img {
+  max-width: 400px;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.cta-button {
+  display: inline-block;
+  background-color: #0078ff;
+  color: #fff;
+  padding: 0.8em 1.5em;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+  background-color: #005ecc;
+}
+
+/* FEATURES SECTION */
+.features {
+  padding: 2em;
+  background: #fff;
+  text-align: center;
+}
+
+.features h2 {
+  font-size: 2em;
+  margin-bottom: 1em;
+}
+
+.feature-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2em;
+  margin-top: 2em;
+}
+
+.feature-item h3 {
+  font-size: 1.2em;
+  margin-bottom: 0.5em;
+}
+
+.feature-item p {
+  font-size: 1em;
+  line-height: 1.5;
+}
+
+/* FAQ SECTION */
+.faq {
+  padding: 2em;
+  background: #f9f9f9;
+}
+
+.faq h2 {
+  font-size: 2em;
+  text-align: center;
+  margin-bottom: 1em;
+}
+
+.faq-item {
+  max-width: 600px;
+  margin: 1em auto;
+  text-align: left;
+}
+
+.faq-item h3 {
+  font-size: 1.1em;
+  margin-bottom: 0.5em;
+}
+
+/* CONTACT SECTION */
+.contact {
+  padding: 2em;
+  background: #fff;
+  text-align: center;
+}
+
+.contact h2 {
+  font-size: 2em;
+  margin-bottom: 1em;
+}
+
+/* FOOTER */
+.footer {
+  padding: 1em 2em;
+  background-color: #f1f1f1;
+  text-align: center;
+}
