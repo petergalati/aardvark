@@ -72,7 +72,7 @@ function createLoadingOverlay(text) {
       <div style="font-style: italic; margin: 20px 0; padding: 10px; background: #f5f5f5; border-radius: 8px;">
         "${text}"
       </div>
-      <div>Please wait aardvark sniffs this information...</div>
+      <div>Please wait while aardvark sniffs this information...</div>
     </div>
   `;
 
@@ -300,6 +300,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === "SHOW_RESULT") {
+    removeExistingOverlay('aardvark-verifier-overlay');
     createResultOverlay(request.payload);
     sendResponse({ status: "Result overlay shown" });
   }
