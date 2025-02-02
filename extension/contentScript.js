@@ -65,13 +65,14 @@ function createLoadingOverlay(text) {
   content.innerHTML = `
     <div style="text-align: center;">
       <div style="margin-bottom: 20px;">
+        <img src="${chrome.runtime.getURL('icons/icon16.png')}" alt="Logo" style="width: 100px; height: auto; margin-bottom: 10px;">
         <div class="loader"></div>
-        <h3>Analyzing Claim</h3>
+        <h3>Analysing Claim</h3>
       </div>
       <div style="font-style: italic; margin: 20px 0; padding: 10px; background: #f5f5f5; border-radius: 8px;">
         "${text}"
       </div>
-      <div>Please wait while we verify this information...</div>
+      <div>Please wait aardvark sniffs this information...</div>
     </div>
   `;
 
@@ -105,80 +106,71 @@ function createResultOverlay(data) {
   overlay.id = 'aardvark-verifier-overlay';
   Object.assign(overlay.style, STYLES.overlay);
 
-  const claim = data.response.claims[0]; // Assuming first claim
+  const claims = data.response.claims;
+  let currentClaimIndex = 0;
 
   // Create main content container
   const content = document.createElement('div');
-  
+
+  // Create header container
+  const header = document.createElement('div');
+  header.style.cssText = 'display: flex; align-items: center; margin-bottom: 20px;';
+
+  // Add logo
+  const logo = document.createElement('img');
+  logo.src = chrome.runtime.getURL('icons/icon16.png');
+  logo.alt = 'Logo';
+  logo.style.cssText = 'width: 50px; height: auto; margin-right: 10px;';
+  header.appendChild(logo);
+
   // Add determination badge
   const determinationBadge = document.createElement('div');
   Object.assign(determinationBadge.style, STYLES.determinationBadge);
-  determinationBadge.style.backgroundColor = getDeterminationColor(claim.determination);
-  determinationBadge.style.color = '#ffffff';
-  determinationBadge.innerText = claim.determination;
-  content.appendChild(determinationBadge);
+  header.appendChild(determinationBadge);
+
+  content.appendChild(header);
 
   // Add claim text
   const claimText = document.createElement('h2');
   claimText.style.cssText = 'margin: 16px 0; font-size: 18px;';
-  claimText.innerText = claim.claim;
   content.appendChild(claimText);
 
   // Add summary
   const summary = document.createElement('div');
   summary.style.cssText = 'margin: 16px 0; padding: 16px; background: #f5f5f5; border-radius: 8px;';
-  summary.innerText = data.response.summary;
+  summary.innerText = data.response.summary; // Use the summary from the response
   content.appendChild(summary);
 
-  // Add expandable sections
-  const sections = [
-    { title: 'Explanation', content: claim.explanation },
-    { title: 'Context & Bias', content: claim.context_and_bias },
-    { title: 'Evidence Strength', content: claim.evidence_strength },
-    { title: 'Counterarguments', content: claim.counterarguments },
-    { title: 'Research Process', content: claim.research_process },
-    { title: 'Limitations', content: claim.limitations }
-  ];
-
-  sections.forEach(section => {
-    content.appendChild(createExpandableSection(section.title, section.content));
-  });
+  // Add expandable sections container
+  const sectionsContainer = document.createElement('div');
+  content.appendChild(sectionsContainer);
 
   // Add sources section
-  if (claim.sources && claim.sources.length > 0) {
-    const sourcesSection = document.createElement('div');
-    sourcesSection.style.cssText = 'margin-top: 24px; border-top: 1px solid #eee; padding-top: 16px;';
-    
-    const sourcesTitle = document.createElement('h3');
-    sourcesTitle.innerText = 'Sources';
-    sourcesSection.appendChild(sourcesTitle);
+  const sourcesSection = document.createElement('div');
+  sourcesSection.style.cssText = 'margin-top: 24px; border-top: 1px solid #eee; padding-top: 16px;';
+  content.appendChild(sourcesSection);
 
-    claim.sources.forEach(source => {
-      const sourceDiv = document.createElement('div');
-      sourceDiv.style.cssText = 'margin: 12px 0; padding: 12px; background: #f8f8f8; border-radius: 8px;';
-      
-      const sourceLink = document.createElement('a');
-      sourceLink.href = source.url;
-      sourceLink.target = '_blank';
-      sourceLink.style.cssText = 'color: #007AFF; text-decoration: none; display: block; margin-bottom: 8px;';
-      sourceLink.innerText = source.url;
-      
-      const reliability = document.createElement('div');
-      reliability.style.cssText = 'color: #666; font-size: 14px; margin-bottom: 8px;';
-      reliability.innerText = `Reliability: ${source.reliability}`;
-      
-      const description = document.createElement('div');
-      description.style.cssText = 'font-size: 14px;';
-      description.innerText = source.description;
+  // Add navigation buttons
+  const navigationContainer = document.createElement('div');
+  navigationContainer.style.cssText = 'display: flex; justify-content: space-between; margin-top: 16px;';
 
-      sourceDiv.appendChild(sourceLink);
-      sourceDiv.appendChild(reliability);
-      sourceDiv.appendChild(description);
-      sourcesSection.appendChild(sourceDiv);
-    });
+  const prevButton = createButton('Previous', () => {
+    if (currentClaimIndex > 0) {
+      currentClaimIndex--;
+      updateClaimDisplay();
+    }
+  });
 
-    content.appendChild(sourcesSection);
-  }
+  const nextButton = createButton('Next', () => {
+    if (currentClaimIndex < claims.length - 1) {
+      currentClaimIndex++;
+      updateClaimDisplay();
+    }
+  });
+
+  navigationContainer.appendChild(prevButton);
+  navigationContainer.appendChild(nextButton);
+  content.appendChild(navigationContainer);
 
   // Add close button
   const closeButton = createButton('Close', () => overlay.remove());
@@ -187,6 +179,74 @@ function createResultOverlay(data) {
 
   overlay.appendChild(content);
   document.body.appendChild(overlay);
+
+  // Function to update the claim display
+  function updateClaimDisplay() {
+    const claim = claims[currentClaimIndex];
+
+    determinationBadge.style.backgroundColor = getDeterminationColor(claim.determination);
+    determinationBadge.innerText = claim.determination;
+
+    claimText.innerText = claim.claim;
+
+    // Clear existing expandable sections
+    sectionsContainer.innerHTML = '';
+
+    // Add expandable sections for the current claim
+    const sections = [
+      { title: 'Explanation', content: claim.explanation },
+      { title: 'Context & Bias', content: claim.context_and_bias },
+      { title: 'Evidence Strength', content: claim.evidence_strength },
+      { title: 'Counterarguments', content: claim.counterarguments },
+      { title: 'Research Process', content: claim.research_process },
+      { title: 'Limitations', content: claim.limitations }
+    ];
+
+    sections.forEach(section => {
+      sectionsContainer.appendChild(createExpandableSection(section.title, section.content));
+    });
+
+    // Clear existing sources
+    sourcesSection.innerHTML = '';
+
+    // Add sources for the current claim
+    if (claim.sources && claim.sources.length > 0) {
+      const sourcesTitle = document.createElement('h3');
+      sourcesTitle.innerText = 'Sources';
+      sourcesSection.appendChild(sourcesTitle);
+
+      claim.sources.forEach(source => {
+        const sourceDiv = document.createElement('div');
+        sourceDiv.style.cssText = 'margin: 12px 0; padding: 12px; background: #f8f8f8; border-radius: 8px;';
+
+        const sourceLink = document.createElement('a');
+        sourceLink.href = source.url;
+        sourceLink.target = '_blank';
+        sourceLink.style.cssText = 'color: #007AFF; text-decoration: none; display: block; margin-bottom: 8px;';
+        sourceLink.innerText = source.url;
+
+        const reliability = document.createElement('div');
+        reliability.style.cssText = 'color: #666; font-size: 14px; margin-bottom: 8px;';
+        reliability.innerText = `Reliability: ${source.reliability}`;
+
+        const description = document.createElement('div');
+        description.style.cssText = 'font-size: 14px;';
+        description.innerText = source.description;
+
+        sourceDiv.appendChild(sourceLink);
+        sourceDiv.appendChild(reliability);
+        sourceDiv.appendChild(description);
+        sourcesSection.appendChild(sourceDiv);
+      });
+    }
+
+    // Update navigation button states
+    prevButton.disabled = currentClaimIndex === 0;
+    nextButton.disabled = currentClaimIndex === claims.length - 1;
+  }
+
+  // Initial claim display
+  updateClaimDisplay();
 }
 
 function createExpandableSection(title, content) {
