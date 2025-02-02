@@ -12,18 +12,17 @@ def home():
     return "Hello, Flask!"
 
 # Define an API endpoint for GET requests
-@app.route('/api/data', methods=['GET'])
+@app.route('/api/test', methods=['GET'])
 def get_data():
     data = {
-        "message": "This is a sample API response"
+        "message": "good shit"
     }
     return jsonify(data)
 
 # Define another route to handle POST requests
-@app.route('/api/data', methods=['POST'])
+@app.route('/api/generate', methods=['POST'])
 def post_data():
-    # Get the prompt from the request body
-    prompt = request.json.get("prompt", "")
+    prompt = request.json.get("claim", "")
     
     if prompt:
         response_text = generate_content(prompt)
