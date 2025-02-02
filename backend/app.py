@@ -3,6 +3,8 @@ from datetime import date
 from gemini_service import generate_content
 from firestore import add_comment, read_comments
 from flask_cors import CORS
+import anthropic
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -60,6 +62,65 @@ def read_comments_api():
         return jsonify({"comments": comments})
     else:
         return jsonify({"error": "Missing URL parameter"}), 400
+
+
+client = anthropic.Anthropic(
+    api_key=os.getenv("CLAUDE-API-KEY") # or omit to use environment variable
+)
+
+def summarize_text(texts):
+    """
+    Concatenate texts and ask Claude to summarize in a short paragraph.
+    Returns the summary string.
+    """
+
+    # Create a completion call to Claude.
+    # You can adjust model, max_tokens, temperature, etc. as needed.
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=4096,
+        temperature=0,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"""Summarise the thoughts of readers in the reader comments, given here:{texts}, in about 2-3 sentences. Do not speak in the first person"""
+                    }
+                ]
+            }
+        ]
+    )
+
+    return response.content[0].text
+
+@app.route('/api/summarize', methods=['POST'])
+def summarize_api():
+    """
+    Expects JSON in the format:
+    {
+      "texts": ["string1", "string2", ...]
+    }
+    Returns:
+    {
+      "summary": "..."
+    }
+    """
+    data = request.json or {}
+    texts = data.get("texts", [])
+
+    if not texts or not isinstance(texts, list):
+        return jsonify({"error": "No valid list of texts provided"}), 400
+
+    try:
+        summary_result = summarize_text(texts)
+        print(summary_result)
+        return jsonify({"summary": summary_result})
+    except Exception as e:
+        print(str(e))
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
