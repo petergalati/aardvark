@@ -238,35 +238,65 @@ async function fetchComments() {
 
 // Highlight text that has comments
 function highlightTextWithComments(comments) {
-  comments.forEach(comment => {
-    highlightText(comment.text, comment.comment);
-  });
-}
-
-// Wrap matching text in a <span> with highlight styling
-function highlightText(text, comment) {
   const body = document.body;
   const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
 
+  const nodesToProcess = [];
+
   while (walker.nextNode()) {
-    const node = walker.currentNode;
-    const index = node.nodeValue.indexOf(text);
-
-    if (index !== -1) {
-      const span = document.createElement("span");
-      span.textContent = text;
-      span.style.backgroundColor = "yellow";
-      span.style.cursor = "pointer";
-      span.style.borderRadius = "3px";
-      span.style.padding = "2px";
-
-      // Show comment as tooltip on hover
-      span.title = comment;
-
-      node.parentNode.replaceChild(span, node);
-    }
+    nodesToProcess.push(walker.currentNode);
   }
+
+  nodesToProcess.forEach(node => {
+    let parent = node.parentNode;
+    let textContent = node.nodeValue;
+    let modified = false;
+
+    let fragments = [];
+    let lastIndex = 0;
+
+    comments.forEach(({ text, comment }) => {
+      let regex = new RegExp(text, "gi"); // Case-insensitive search
+      let match;
+
+      while ((match = regex.exec(textContent)) !== null) {
+        modified = true;
+
+        // Push unmodified text before match
+        if (match.index > lastIndex) {
+          fragments.push(document.createTextNode(textContent.slice(lastIndex, match.index)));
+        }
+
+        // Create highlighted span
+        let span = document.createElement("span");
+        span.textContent = match[0];
+        span.style.backgroundColor = "yellow";
+        span.style.cursor = "pointer";
+        span.style.borderRadius = "3px";
+        span.style.padding = "2px";
+        span.title = comment; // Tooltip
+
+        fragments.push(span);
+
+        lastIndex = match.index + match[0].length;
+      }
+    });
+
+    // Append any remaining unmodified text
+    if (lastIndex < textContent.length) {
+      fragments.push(document.createTextNode(textContent.slice(lastIndex)));
+    }
+
+    // Replace text node only if modifications were made
+    if (modified) {
+      let fragment = document.createDocumentFragment();
+      fragments.forEach(fragment.appendChild.bind(fragment));
+      parent.replaceChild(fragment, node);
+    }
+  });
 }
+
+
 
 // Run this when the page loads
 fetchComments();
