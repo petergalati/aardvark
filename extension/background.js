@@ -91,7 +91,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-
+  
   if (request.action === "SAVE_COMMENT") {
     const { url, text, comment, username } = request.payload;
 
@@ -123,7 +123,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     // Let Chrome know we’ll respond asynchronously
     return true;
   }
+  
 });
+
+
+
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
