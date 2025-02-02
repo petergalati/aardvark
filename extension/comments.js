@@ -39,18 +39,11 @@ function createCommentOverlay({ url, text }) {
 
     // Header
     const header = document.createElement("h3");
-    header.innerText = "Add Comment to Aardvark";
+    header.innerText = "Add Comment with Aardvark";
     header.style.fontWeight = "bold";
     header.style.marginBottom = "10px";
     commentOverlay.appendChild(header);
 
-    // Show the url/text that will be commented on
-    const info = document.createElement("p");
-    info.innerText = `URL: ${url}\nText: "${text}"`;
-    info.style.whiteSpace = "pre-wrap";
-    info.style.fontSize = "0.9em";
-    info.style.marginBottom = "10px";
-    commentOverlay.appendChild(info);
 
     // Text area for the comment
     const textArea = document.createElement("textarea");
