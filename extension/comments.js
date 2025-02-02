@@ -227,6 +227,9 @@ function highlightTextWithComments(comments) {
  * 4) Pop-up for Comments on Hover
  ********************************************/
 
+// Store summaries for each text
+const summaries = new Map();
+
 // Show the pop-up comment box
 function showCommentPopup(span, text, comments) {
     // Remove any existing pop-ups
@@ -249,31 +252,46 @@ function showCommentPopup(span, text, comments) {
 
     // Summary container (we'll load from /api/summarize)
     const summary = document.createElement("p");
-    summary.innerText = "Summary: Loading...";
-    summary.style.fontWeight = "bold";
     popup.appendChild(summary);
 
-    // Fetch summary from your Flask endpoint
-    fetch("http://127.0.0.1:5000/api/summarize", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ texts: comments })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.summary) {
-                summary.innerText = `Summary: ${data.summary}`;
-            } else {
-                summary.innerText = "Summary: (Error retrieving summary)";
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            summary.innerText = "Summary: (Error summarizing comments)";
-        });
+    // Check if a summary is already available for this text
+    if (summaries.has(text)) {
+        summary.innerText = `Summary: ${summaries.get(text)}`;
+        addCommentsLinkAndDiv(popup, comments);
+    } else {
+        summary.innerText = "Summary: Loading...";
+        summary.style.fontWeight = "bold";
 
+        // Fetch summary from your Flask endpoint
+        fetch("http://127.0.0.1:5000/api/summarize", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ texts: comments })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.summary) {
+                    summaries.set(text, data.summary);
+                    summary.innerText = `Summary: ${data.summary}`;
+                } else {
+                    summary.innerText = "Summary: (Error retrieving summary)";
+                }
+                addCommentsLinkAndDiv(popup, comments);
+            })
+            .catch(err => {
+                console.error(err);
+                summary.innerText = "Summary: (Error summarizing comments)";
+                addCommentsLinkAndDiv(popup, comments);
+            });
+    }
+
+    span.appendChild(popup);
+}
+
+// Add the comments link and div to the popup
+function addCommentsLinkAndDiv(popup, comments) {
     // Expandable "Show all comments" link
     const commentsLink = document.createElement("a");
     commentsLink.innerText = "Show all comments";
@@ -315,8 +333,6 @@ function showCommentPopup(span, text, comments) {
 
     popup.appendChild(commentsLink);
     popup.appendChild(fullCommentsDiv);
-
-    span.appendChild(popup);
 }
 
 // Hide the pop-up
@@ -326,7 +342,6 @@ function hideCommentPopup() {
         existingPopup.remove();
     }
 }
-
 /********************************************
  * 5) Utility Functions
  ********************************************/
