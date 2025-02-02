@@ -3,7 +3,7 @@
 Aardvark is a fact-checking and opinion aggregation platform designed to help users validate
 claims, discuss statements, and gain insights from community perspectives. With the Aardvark
 Chrome Extension, users can highlight and comment on text across any website. The platform's
-backend then uses AI to analyze and summarize the community's opinions, providing real-time
+backend then uses AI to analyse and summarise the community's opinions, providing real-time
 insights into contested or frequently discussed statements.
 
 ![Output Claim](res/output_claim.png)
