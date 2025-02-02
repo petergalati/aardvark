@@ -14,7 +14,7 @@
  */
 function createCommentOverlay({ url, text }) {
     // Remove any existing comment overlay first
-    const existingOverlay = document.getElementById("gemini-comment-overlay");
+    const existingOverlay = document.getElementById("aardvark-comment-overlay");
     if (existingOverlay) {
         existingOverlay.remove();
     }
@@ -24,7 +24,7 @@ function createCommentOverlay({ url, text }) {
 
     // Create the container
     const commentOverlay = document.createElement("div");
-    commentOverlay.id = "gemini-comment-overlay";
+    commentOverlay.id = "aardvark-comment-overlay";
     commentOverlay.style.position = "fixed";
     commentOverlay.style.width = "300px";
     commentOverlay.style.padding = "16px";
