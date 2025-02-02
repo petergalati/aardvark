@@ -240,7 +240,6 @@ async function fetchComments() {
 function highlightTextWithComments(comments) {
   const body = document.body;
   const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
-
   const nodesToProcess = [];
 
   while (walker.nextNode()) {
@@ -252,50 +251,89 @@ function highlightTextWithComments(comments) {
     let textContent = node.nodeValue;
     let modified = false;
 
-    let fragments = [];
-    let lastIndex = 0;
+    let highlights = [];
 
+    // Collect all matches & their comments
     comments.forEach(({ text, comment }) => {
       let regex = new RegExp(text, "gi"); // Case-insensitive search
       let match;
 
       while ((match = regex.exec(textContent)) !== null) {
-        modified = true;
+        highlights.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          comments: [comment]
+        });
+      }
+    });
 
-        // Push unmodified text before match
-        if (match.index > lastIndex) {
-          fragments.push(document.createTextNode(textContent.slice(lastIndex, match.index)));
+    if (highlights.length > 0) {
+      modified = true;
+      highlights = mergeOverlappingHighlights(highlights, textContent); // Merge overlapping highlights
+
+      let fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+
+      highlights.forEach(({ start, end, text, comments }) => {
+        if (start > lastIndex) {
+          fragment.appendChild(document.createTextNode(textContent.slice(lastIndex, start)));
         }
 
-        // Create highlighted span
+        // Create highlight span
         let span = document.createElement("span");
-        span.textContent = match[0];
+        span.textContent = text;
         span.style.backgroundColor = "yellow";
         span.style.cursor = "pointer";
         span.style.borderRadius = "3px";
         span.style.padding = "2px";
-        span.title = comment; // Tooltip
 
-        fragments.push(span);
+        // Show multiple comments in tooltip
+        span.title = comments.join("\n");
 
-        lastIndex = match.index + match[0].length;
+        fragment.appendChild(span);
+        lastIndex = end;
+      });
+
+      if (lastIndex < textContent.length) {
+        fragment.appendChild(document.createTextNode(textContent.slice(lastIndex)));
       }
-    });
 
-    // Append any remaining unmodified text
-    if (lastIndex < textContent.length) {
-      fragments.push(document.createTextNode(textContent.slice(lastIndex)));
-    }
-
-    // Replace text node only if modifications were made
-    if (modified) {
-      let fragment = document.createDocumentFragment();
-      fragments.forEach(fragment.appendChild.bind(fragment));
       parent.replaceChild(fragment, node);
     }
   });
 }
 
+// Merges overlapping or contained highlights into a single range
+function mergeOverlappingHighlights(highlights, textContent) {
+  if (highlights.length === 0) return [];
+
+  // Sort highlights by start position
+  highlights.sort((a, b) => a.start - b.start);
+
+  let merged = [];
+  let current = highlights[0];
+
+  for (let i = 1; i < highlights.length; i++) {
+    let next = highlights[i];
+
+    if (next.start <= current.end) {
+      // If overlapping or contained, extend the highlight and merge comments
+      current.end = Math.max(current.end, next.end);
+      current.comments = [...new Set([...current.comments, ...next.comments])]; // Merge unique comments
+    } else {
+      // Store the correctly merged highlight
+      current.text = textContent.slice(current.start, current.end);
+      merged.push(current);
+      current = next;
+    }
+  }
+
+  // Push the last merged highlight
+  current.text = textContent.slice(current.start, current.end);
+  merged.push(current);
+
+  return merged;
+}
 
 
 // Run this when the page loads
