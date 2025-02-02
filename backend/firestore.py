@@ -5,6 +5,7 @@ from firebase_admin import credentials, firestore
 import re
 
 load_dotenv()
+print(os.getenv('FIRESTORE_PATH'))
 
 db = None
 
