@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request
 from gemini_service import generate_content
 from firestore import add_comment, read_comments
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Define a route
 @app.route('/')

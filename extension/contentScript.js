@@ -219,3 +219,61 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ status: "Comment overlay shown" });
   }
 });
+
+// Fetch comments from backend when the page loads
+async function fetchComments() {
+  const url = window.location.href;
+
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/api/comments?url=${encodeURIComponent(url)}`);
+    const data = await response.json();
+
+    if (data.comments && data.comments.length > 0) {
+      highlightTextWithComments(data.comments);
+    }
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+  }
+}
+
+// Highlight text that has comments
+function highlightTextWithComments(comments) {
+  comments.forEach(comment => {
+    highlightText(comment.text, comment.comment);
+  });
+}
+
+// Wrap matching text in a <span> with highlight styling
+function highlightText(text, comment) {
+  const body = document.body;
+  const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null, false);
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const index = node.nodeValue.indexOf(text);
+
+    if (index !== -1) {
+      const span = document.createElement("span");
+      span.textContent = text;
+      span.style.backgroundColor = "yellow";
+      span.style.cursor = "pointer";
+      span.style.borderRadius = "3px";
+      span.style.padding = "2px";
+
+      // Show comment as tooltip on hover
+      span.title = comment;
+
+      node.parentNode.replaceChild(span, node);
+    }
+  }
+}
+
+// Run this when the page loads
+fetchComments();
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "FETCH_COMMENTS") {
+    fetchComments();
+  }
+});
+
