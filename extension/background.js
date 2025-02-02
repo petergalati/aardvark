@@ -5,7 +5,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "verifyAardvark",
     title: "Verify with Aardvark",
-    contexts: ["selection"] // Only show when text is selected
+    contexts: ["selection"]
   });
 
   chrome.contextMenus.create({
@@ -17,57 +17,59 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Listen for the context menu click event
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    const selectedText = info.selectionText;
+  const selectedText = info.selectionText;
 
-    if (info.menuItemId === "verifyAardvark") {
+  if (info.menuItemId === "verifyAardvark") {
     try {
-      // Call the Flask backend
-      const response = await fetch("http://127.0.0.1:5000/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: selectedText })
+      // Show loading state
+      chrome.tabs.sendMessage(tab.id, {
+        action: "SHOW_LOADING",
+        payload: {
+          text: selectedText
+        }
       });
 
-      // If the backend doesn’t respond with valid JSON or the status != 200
+      // Call the Flask backend
+      const response = await fetch("http://127.0.0.1:5000/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ claim: selectedText })
+      });
+
       if (!response.ok) {
         throw new Error("Backend returned an error");
       }
 
       const data = await response.json();
 
-      // If the data is null or empty, we handle fallback
-      if (!data) {
-        // Send fallback info to the content script
-        chrome.tabs.sendMessage(tab.id, {
-          action: "SHOW_RESULT",
-          payload: {
-            success: false,
-            text: selectedText,
-            message: "No valid response from backend.",
-            sources: []
-          }
-        });
-      } else {
-        // Data from the server is available; forward to content script
-        chrome.tabs.sendMessage(tab.id, {
-          action: "SHOW_RESULT",
-          payload: {
-            success: true,
-            text: selectedText,
-            message: data.message || "Verification successful.",
-            sources: data.sources || ["source1.com", "source2.com"]
-          }
-        });
+      if (!data || !data.response) {
+        throw new Error("Invalid response format");
       }
+
+      // Send the formatted data to the content script
+      chrome.tabs.sendMessage(tab.id, {
+        action: "SHOW_RESULT",
+        payload: data // Send the entire response object
+      });
+
     } catch (error) {
-      // If the request fails (network or server error), send fallback
+      // If there's an error, show an error message in the overlay
       chrome.tabs.sendMessage(tab.id, {
         action: "SHOW_RESULT",
         payload: {
-          success: false,
-          text: selectedText,
-          message: "Failed to connect to backend.",
-          sources: []
+          response: {
+            claims: [{
+              determination: "Error",
+              claim: selectedText,
+              explanation: "An error occurred while verifying this claim: " + error.message,
+              context_and_bias: "Unable to analyze due to technical error",
+              evidence_strength: "No evidence available due to error",
+              counterarguments: "Unable to provide counterarguments",
+              limitations: "Service currently unavailable",
+              sources: []
+            }],
+            summary: "Verification failed due to technical issues. Please try again later."
+          }
         }
       });
     }
@@ -89,6 +91,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  
   if (request.action === "SAVE_COMMENT") {
     const { url, text, comment, username } = request.payload;
 
@@ -120,7 +123,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     // Let Chrome know we’ll respond asynchronously
     return true;
   }
+  
 });
+
+
+
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
