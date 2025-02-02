@@ -1,14 +1,14 @@
 // A simple function to create an overlay element
-function createOverlay({ success, text, message, sources }) {
+function createOverlay({ success, text, sources }) {
   // Remove any old overlay first
-  const existingOverlay = document.getElementById("gemini-verifier-overlay");
+  const existingOverlay = document.getElementById("aardvark-verifier-overlay");
   if (existingOverlay) {
     existingOverlay.remove();
   }
 
   // Create a container
   const overlay = document.createElement("div");
-  overlay.id = "gemini-verifier-overlay";
+  overlay.id = "aardvark-verifier-overlay";
   overlay.style.position = "fixed";
   overlay.style.top = "10px";
   overlay.style.right = "10px";
@@ -25,7 +25,7 @@ function createOverlay({ success, text, message, sources }) {
 
   // Create header
   const header = document.createElement("h3");
-  header.innerText = "Gemini Verification Result";
+  header.innerText = "Aardvark Verification Result";
   header.style.fontWeight = "bold";
   header.style.marginBottom = "10px"; // Add spacing
   overlay.appendChild(header);

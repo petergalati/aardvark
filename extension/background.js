@@ -3,8 +3,8 @@
 // When the extension is installed (or updated), create the context menu item
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: "verifyGemini",
-    title: "Verify with Gemini",
+    id: "verifyAardvark",
+    title: "Verify with Aardvark",
     contexts: ["selection"] // Only show when text is selected
   });
 
@@ -17,10 +17,9 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Listen for the context menu click event
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  const selectedText = info.selectionText || "";
+    const selectedText = info.selectionText;
 
-
-  if (info.menuItemId === "verifyGemini") {
+    if (info.menuItemId === "verifyAardvark") {
     try {
       // Call the Flask backend
       const response = await fetch("http://127.0.0.1:5000/api/data", {
