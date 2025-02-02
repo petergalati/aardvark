@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from datetime import date
 from gemini_service import generate_content
 from firestore import add_comment, read_comments
 from flask_cors import CORS
@@ -22,10 +23,13 @@ def get_data():
 # Define another route to handle POST requests
 @app.route('/api/generate', methods=['POST'])
 def post_data():
-    prompt = request.json.get("claim", "")
+    claim = request.json.get("claim", "")
+
+    today = date.today()
+    parsed_date = request.json.get("date", today.strftime("%d-%m-%Y"))
     
-    if prompt:
-        response_text = generate_content(prompt)
+    if claim:
+        response_text = generate_content(claim, parsed_date)
         return jsonify({"response": response_text})
     else:
         return jsonify({"error": "No prompt provided"}), 400

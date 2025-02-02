@@ -10,7 +10,7 @@ load_dotenv()
 
 print(os.getenv('GEMINI_API_KEY'))
 
-def generate_content(claim: str):
+def generate_content(claim: str, date: str):
     api_key = os.getenv('GEMINI_API_KEY')
 
     if api_key is None:
@@ -21,12 +21,15 @@ def generate_content(claim: str):
 
     google_search_tool = Tool(google_search=GoogleSearch())
 
+    # Get the URLs from the second function
+    urls = get_urls(claim, date)
+
     response = client.models.generate_content(
         model=model_id,
         contents=f"""
         You are a professional fact-checker tasked with verifying the accuracy of claims in a given text. Your goal is to maintain information integrity and combat misinformation. Here's the text you need to fact-check:
 
-        {claim}
+        {claim}. This was claimed on {date}.
 
         Your task is to analyze this text, identify specific claims, research their accuracy, and provide a detailed fact-check report. Follow these steps:
 
@@ -39,7 +42,7 @@ def generate_content(claim: str):
         c. Research process: [Briefly describe your research process]
         d. Counterarguments: [Note any potential alternative interpretations or opposing viewpoints]
         e. Evidence strength: [Assess the quality and quantity of evidence supporting or refuting the claim]
-        f. Determination: [State whether the claim is True, False, Partially True, Misleading, or Unverified]
+        f. Determination: [State whether the claim is True, False, Partially True, Misleading]
         g. Reasoning: [Explain your reasoning for the determination]
         h. Sources: [List and describe multiple reliable sources you used, explaining why they are credible]
         i. Context and bias: [Reflect on any relevant context or potential biases in the sources]
@@ -53,7 +56,7 @@ def generate_content(claim: str):
             {{
                 "claim": "The exact claim text",
                 "relevant_quote": "The exact quote from the text",
-                "determination": "True/False/Partially True/Misleading/Unverified",
+                "determination": "True/False/Partially True/Misleading",
                 "explanation": "Your reasoning for the determination",
                 "research_process": "Brief description of your research process",
                 "counterarguments": "Any potential alternative interpretations or opposing viewpoints",
@@ -79,22 +82,32 @@ def generate_content(claim: str):
         }}
         ```
 
-
         IMPORTANT: Ensure that your output is a valid string that can be parsed by Python's json.loads() function. This means you should escape any quotation marks within the text and use proper line breaks.
 
         Important guidelines:
-        - Use reputable websites, academic journals, or official government sources.
-        - Avoid using social media, personal blogs, or unreliable news outlets as sources.
-        - If a claim is ambiguous or you cannot find reliable information to verify it, mark it as "Unverified" and explain why.
-        - Double-check your output format to ensure it can be parsed by json.loads() before finalizing.
+        - If a claim is ambiguous or you cannot find reliable information to verify it, and explain why. 
 
         Begin your fact-checking process now. Start by listing the claims with their quotes, then analyze each one in detail, and finally present your findings in the specified text format that mimics JSON structure.
+
+        Here are some relevant URLs to consider in your research:
+        {urls}
         """,
         config=GenerateContentConfig(
             tools=[google_search_tool],
             response_modalities=["TEXT"]
         )
     )
+
+    print(response)
+
+    # Check if grounding_metadata is available, and if it is, check search_entry_point
+    if response.candidates and response.candidates[0].grounding_metadata:
+        if response.candidates[0].grounding_metadata.search_entry_point:
+            print("Main Function URLs", response.candidates[0].grounding_metadata.search_entry_point.rendered_content)
+        else:
+            print("Main function: No search_entry_point found in grounding metadata")
+    else:
+        print("Main function: No grounding metadata found in response")
 
 
     match = re.search(r'```json\n({.*})\n```', response.text, re.DOTALL)
@@ -109,3 +122,42 @@ def generate_content(claim: str):
         print("No valid JSON found in the response")
 
     return "Error: No valid JSON found in the response"
+
+def get_urls(claim: str, date: str):
+    api_key = os.getenv('GEMINI_API_KEY')
+
+    if api_key is None:
+        raise ValueError("API key not found in environment variables")
+
+    client = genai.Client(api_key=api_key)
+    model_id = "gemini-2.0-flash-exp"
+
+    google_search_tool = Tool(google_search=GoogleSearch())
+
+    response = client.models.generate_content(
+        model=model_id,
+        contents=f"""
+        You are a professional fact-checker tasked with verifying the accuracy of claims in a given text. Your goal is to maintain information integrity and combat misinformation. Here's the text you need to fact-check:
+
+        {claim}. This was claimed on {date}.
+        """,
+        config=GenerateContentConfig(
+            tools=[google_search_tool],
+            response_modalities=["TEXT"]
+        )
+    )
+
+    print(response)
+
+    if response.candidates and response.candidates[0].grounding_metadata:
+        if response.candidates[0].grounding_metadata.search_entry_point:
+          # Extract URLs if available
+            urls = response.candidates[0].grounding_metadata.search_entry_point.rendered_content
+            print(f"get_urls function found these urls {urls}")
+            return urls
+        else:
+          print("get_urls function: No search_entry_point found in grounding metadata")
+          return ""
+    else:
+      print("get_urls function: No grounding metadata found in response")
+      return ""
