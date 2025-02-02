@@ -1,19 +1,111 @@
 import os
-import google.generativeai as genai
+import json
+import re
+
+from google import genai
+from google.genai.types import Tool, GenerateContentConfig, GoogleSearch
 from dotenv import load_dotenv
 
 load_dotenv()
 
 print(os.getenv('GEMINI_API_KEY'))
 
-def configure_ai():
-    api_key = os.getenv('GEMINI_API_KEY')  # Get the API key from the .env file
+def generate_content(claim: str):
+    api_key = os.getenv('GEMINI_API_KEY')
+
     if api_key is None:
         raise ValueError("API key not found in environment variables")
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-2.0-flash-exp")
 
-def generate_content(prompt: str):
-    model = configure_ai()
-    response = model.generate_content(prompt)
-    return response.text
+    client = genai.Client(api_key=api_key)
+    model_id = "gemini-2.0-flash-exp"
+
+    google_search_tool = Tool(google_search=GoogleSearch())
+
+    response = client.models.generate_content(
+        model=model_id,
+        contents=f"""
+        You are a professional fact-checker tasked with verifying the accuracy of claims in a given text. Your goal is to maintain information integrity and combat misinformation. Here's the text you need to fact-check:
+
+        {claim}
+
+        Your task is to analyze this text, identify specific claims, research their accuracy, and provide a detailed fact-check report. Follow these steps:
+
+        1. Read the text carefully and list all claims that can be fact-checked in <extracted_claims> tags. For each claim, include the exact quote from the text.
+
+        2. For each claim, perform a detailed analysis. Wrap your analysis in <analysis> tags and structure your analysis using the following format:
+
+        a. Claim: [Write the claim here]
+        b. Relevant quote: "[Provide the exact quote from the text containing the claim]"
+        c. Research process: [Briefly describe your research process]
+        d. Counterarguments: [Note any potential alternative interpretations or opposing viewpoints]
+        e. Evidence strength: [Assess the quality and quantity of evidence supporting or refuting the claim]
+        f. Determination: [State whether the claim is True, False, Partially True, Misleading, or Unverified]
+        g. Reasoning: [Explain your reasoning for the determination]
+        h. Sources: [List and describe multiple reliable sources you used, explaining why they are credible]
+        i. Context and bias: [Reflect on any relevant context or potential biases in the sources]
+        j. Limitations: [Consider any potential biases or limitations in your own analysis]
+
+        3. After analyzing all claims, compile your findings into a text format that mimics JSON structure. Use the following format:
+
+         ```
+        {{
+            "claims": [
+            {{
+                "claim": "The exact claim text",
+                "relevant_quote": "The exact quote from the text",
+                "determination": "True/False/Partially True/Misleading/Unverified",
+                "explanation": "Your reasoning for the determination",
+                "research_process": "Brief description of your research process",
+                "counterarguments": "Any potential alternative interpretations or opposing viewpoints",
+                "evidence_strength": "Assessment of the quality and quantity of evidence",
+                "sources": [
+                {{
+                    "url": "URL to a reliable source",
+                    "description": "Brief description of the source and its credibility",
+                    "reliability": "Assessment of the source's reliability and potential biases"
+                }},
+                {{
+                    "url": "URL to another reliable source",
+                    "description": "Brief description of the source and its credibility",
+                    "reliability": "Assessment of the source's reliability and potential biases"
+                }}
+                ],
+                "context_and_bias": "Relevant context or potential biases in the sources",
+                "limitations": "Potential biases or limitations in the analysis"
+            }},
+            // Additional claims...
+            ],
+            "summary": "A brief overall summary of your findings"
+        }}
+        ```
+
+
+        IMPORTANT: Ensure that your output is a valid string that can be parsed by Python's json.loads() function. This means you should escape any quotation marks within the text and use proper line breaks.
+
+        Important guidelines:
+        - Use reputable websites, academic journals, or official government sources.
+        - Avoid using social media, personal blogs, or unreliable news outlets as sources.
+        - If a claim is ambiguous or you cannot find reliable information to verify it, mark it as "Unverified" and explain why.
+        - Double-check your output format to ensure it can be parsed by json.loads() before finalizing.
+
+        Begin your fact-checking process now. Start by listing the claims with their quotes, then analyze each one in detail, and finally present your findings in the specified text format that mimics JSON structure.
+        """,
+        config=GenerateContentConfig(
+            tools=[google_search_tool],
+            response_modalities=["TEXT"]
+        )
+    )
+
+
+    match = re.search(r'```json\n({.*})\n```', response.text, re.DOTALL)
+
+    if match:
+        json_string = match.group(1)
+        parsed_data = json.loads(json_string)
+        print(parsed_data)
+        print("success dickhead")
+        return parsed_data
+    else:
+        print("No valid JSON found in the response")
+
+    return "Error: No valid JSON found in the response"

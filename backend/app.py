@@ -19,12 +19,9 @@ def get_data():
 # Define another route to handle POST requests
 @app.route('/api/generate', methods=['POST'])
 def post_data():
-    # Get the prompt from the request body
-    prompt = request.json.get("prompt", "")
+    prompt = request.json.get("claim", "")
     
     if prompt:
-        # formatted_prompt = ""
-
         response_text = generate_content(prompt)
         return jsonify({"response": response_text})
     else:
