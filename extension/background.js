@@ -3,15 +3,15 @@
 // When the extension is installed (or updated), create the context menu item
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: "verifyGemini",
-    title: "Verify with Gemini",
+    id: "verifyAardvark",
+    title: "Verify with Aardvark",
     contexts: ["selection"] // Only show when text is selected
   });
 });
 
 // Listen for the context menu click event
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId === "verifyGemini") {
+  if (info.menuItemId === "verifyAardvark") {
     const selectedText = info.selectionText;
 
     try {
