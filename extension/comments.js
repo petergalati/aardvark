@@ -1,17 +1,7 @@
-// comments.js
-
 /********************************************
  * 1) Comment Overlay
  ********************************************/
 
-/**
- * Creates an overlay for adding comments.
- *
- * @param {Object} params
- * @param {string} params.url - The URL associated with the comment.
- * @param {string} params.text - The text snippet associated with the comment.
- * @returns {HTMLDivElement} The overlay element.
- */
 function createCommentOverlay({ url, text }) {
     // Remove any existing comment overlay first
     const existingOverlay = document.getElementById("aardvark-comment-overlay");
@@ -256,11 +246,32 @@ function showCommentPopup(span, text, comments) {
     popup.style.fontSize = "0.9em";
     popup.style.color = "#000";
 
-    // Summary comment
+    // Summary container (we'll load from /api/summarize)
     const summary = document.createElement("p");
-    summary.innerText = `Summary: ${generateSummary(comments)}`;
+    summary.innerText = "Summary: Loading...";
     summary.style.fontWeight = "bold";
     popup.appendChild(summary);
+
+    // Fetch summary from your Flask endpoint
+    fetch("http://127.0.0.1:5000/api/summarize", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ texts: comments })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.summary) {
+                summary.innerText = `Summary: ${data.summary}`;
+            } else {
+                summary.innerText = "Summary: (Error retrieving summary)";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            summary.innerText = "Summary: (Error summarizing comments)";
+        });
 
     // Expandable "Show all comments" link
     const commentsLink = document.createElement("a");
@@ -319,12 +330,7 @@ function hideCommentPopup() {
  * 5) Utility Functions
  ********************************************/
 
-function generateSummary(comments) {
-    if (comments.length === 1) return comments[0];
-    return `${comments.length} comments available.`;
-}
-
-// Merge overlapping highlights in the text
+// Merges overlapping highlight ranges
 function mergeOverlappingHighlights(highlights, textContent) {
     if (highlights.length === 0) return [];
 
